@@ -19,8 +19,6 @@ class Authentication(Resource):
 
 
 
-
-
     @swagger.operation(notes='Get Api Token',
                        nickname='authenticate',
                        parameters=[

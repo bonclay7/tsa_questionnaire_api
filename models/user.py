@@ -1,9 +1,35 @@
 __author__ = 'grk'
+from flask.ext.restful import reqparse, fields
+from validate_email import validate_email
 
+def email(email_str):
+    if validate_email(email_str):
+        return email_str
+    return None
+
+
+
+user_fields = {
+    'login': fields.String,
+    'email': fields.String,
+    'firstname': fields.String,
+    'lastname': fields.String,
+    'creationDate': fields.DateTime
+}
+
+post_parser = reqparse.RequestParser()
+post_parser.add_argument('login', dest='login', type=str, location='json', required=True, help='login is missing', )
+post_parser.add_argument('password', dest='password', type=str, location='json', required=True,
+                         help='password is missing', )
+post_parser.add_argument('login', dest='login', type=str, location='json', required=True, help='login is missing', )
+post_parser.add_argument('firstname', dest='firstname', type=str, location='json', required=True,
+                         help='firstname is missing', )
+post_parser.add_argument('lastname', dest='lastname', type=str, location='json', required=True,
+                         help='lastname is missing', )
+post_parser.add_argument('email', dest='email', type=email, location='json', required=True, help='The user\'s email', )
 
 
 class User:
-
     def __init__(self):
         self.login = ""
         self.password = ""
@@ -16,23 +42,21 @@ class User:
     @staticmethod
     def user_from_dict(userDict):
         u = User()
-        u.login = userDict['login']
-        u.password = userDict['password']
-        u.email = userDict['email']
-        u.creationDate = userDict['creationDate']
-        u.firstname = userDict['firstname']
-        u.lastname = userDict['lastname']
-        u._id = userDict['_id']
+        u.login = userDict.get('login')
+        u.password = userDict.get('password')
+        u.email = userDict.get('email')
+        u.creationDate = userDict.get('creationDate')
+        u.firstname = userDict.get('firstname')
+        u.lastname = userDict.get('lastname')
+        u._id = userDict.get('_id')
         return u
 
 
     def format(self):
         return {
-            "_id": self._id,
             "login": self.login,
-            "password": self.password,
             "email": self.email,
-            "creationDate": self.creationDate,
+            "creationDate": str(self.creationDate),
             "firstname": self.firstname,
             "lastname": self.lastname
         }

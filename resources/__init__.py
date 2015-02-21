@@ -8,6 +8,7 @@ import re
 
 
 MONGO_URL = "mongodb://192.168.56.102:27017/ait"
+SUPER_USER = "sioAdmin"
 
 app = Flask(__name__)
 #api = restful.Api(app)
@@ -22,19 +23,13 @@ def get_token(authorization):
         return None
 
 
-
-
 def output_json(obj, code, headers=None):
     resp = make_response(dumps(obj), code)
     resp.headers.extend(headers or {})
     return resp
 
 DEFAULT_REPRESENTATIONS = {'application/json': output_json}
-#api = restful.Api(app)
 api = swagger.docs(restful.Api(app), apiVersion='0.1')
-#api.representations = DEFAULT_REPRESENTATIONS
-
-
 
 
 app.config['MONGO_URI'] = MONGO_URL
