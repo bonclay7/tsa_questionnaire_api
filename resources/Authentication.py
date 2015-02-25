@@ -40,7 +40,6 @@ class Authentication(Resource):
                            }
                        ]
     )
-    @crossdomain(origin='*')
     def post(self):
         login = request.headers["X-Login"]
         password = request.headers["X-Password"]
@@ -81,7 +80,6 @@ class Authentication(Resource):
                            }
                        ]
     )
-    @crossdomain(origin='*')
     def delete(self):
         session_dict = authorize(request.headers["Authorization"])
 
