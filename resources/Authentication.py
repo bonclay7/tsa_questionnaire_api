@@ -1,12 +1,12 @@
+from flask.ext.restful.utils.cors import crossdomain
+
 __author__ = 'grk'
 
 from flask.ext.restful import Resource
 from flask import request
-from resources import mongo
-from resources import swagger
 from models.user import User
 from models.session import Session
-from resources import get_token
+from resources import authorize, swagger, mongo
 
 import hashlib
 
@@ -40,6 +40,7 @@ class Authentication(Resource):
                            }
                        ]
     )
+    @crossdomain(origin='*')
     def post(self):
         login = request.headers["X-Login"]
         password = request.headers["X-Password"]
@@ -80,18 +81,11 @@ class Authentication(Resource):
                            }
                        ]
     )
+    @crossdomain(origin='*')
     def delete(self):
-        token = get_token(request.headers["Authorization"])
+        session_dict = authorize(request.headers["Authorization"])
 
-        if token is None:
-            return '', 403
-
-        session_dict = mongo.db.sessions.find_one({"token": token, "status": 0})
-
-        if session_dict is None:
-            return '', 404
-
-        mongo.db.sessions.update({"token": token, "status": 0}, {"$set": {"status": 1}})
+        mongo.db.sessions.update({"token": session_dict.get('token'), "status": 0}, {"$set": {"status": 1}})
 
         print session_dict
         return '', 202

@@ -42,4 +42,4 @@ class Session:
     def format_http(self):
         return {"token": self.token,
                 "creationDate": str(self.creation_date),
-                "user": self.user.login}
+                "user": self.user.format()}

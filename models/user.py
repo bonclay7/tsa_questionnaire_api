@@ -21,7 +21,6 @@ post_parser = reqparse.RequestParser()
 post_parser.add_argument('login', dest='login', type=str, location='json', required=True, help='login is missing', )
 post_parser.add_argument('password', dest='password', type=str, location='json', required=True,
                          help='password is missing', )
-post_parser.add_argument('login', dest='login', type=str, location='json', required=True, help='login is missing', )
 post_parser.add_argument('firstname', dest='firstname', type=str, location='json', required=True,
                          help='firstname is missing', )
 post_parser.add_argument('lastname', dest='lastname', type=str, location='json', required=True,
@@ -37,6 +36,7 @@ class User:
         self.creationDate = ""
         self.firstname = ""
         self.lastname = ""
+        self.deleteDate = ""
         self._id = ""
 
     @staticmethod
@@ -60,3 +60,32 @@ class User:
             "firstname": self.firstname,
             "lastname": self.lastname
         }
+
+    def format_for_update(self):
+        return {
+            "email": self.email,
+            "password": self.password,
+            "firstname": self.firstname,
+            "lastname": self.lastname
+        }
+
+    def format_for_delete(self):
+        return {
+            "login": self.login,
+            "email": self.email,
+            "creationDate": str(self.creationDate),
+            "deleteDate": str(self.deleteDate),
+            "firstname": self.firstname,
+            "lastname": self.lastname
+        }
+
+    def format_for_create(self):
+        return {
+            "login": self.login,
+            "email": self.email,
+            "creationDate": str(self.creationDate),
+            "password": self.password,
+            "firstname": self.firstname,
+            "lastname": self.lastname
+        }
+
