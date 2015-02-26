@@ -30,6 +30,7 @@ class QuizResource(Resource):
         mongo.db.quiz.update({"_id": quiz._id}, {"$push": {"questions": qst.format()}})
 
     def post(self):
+        print request.data
         session = authorize(request.headers["Authorization"])
 
         quiz_input = creation_parser.parse_args()
