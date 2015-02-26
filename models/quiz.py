@@ -1,5 +1,3 @@
-import array
-
 __author__ = 'grk'
 from flask.ext.restful import reqparse, fields, marshal_with
 
@@ -122,7 +120,7 @@ class Question:
     def question_from_dict(questionDict):
         q = Question()
         q._id = questionDict.get('_id')
-        q.title = questionDict.get('title')
+        q.title = unicode(questionDict.get('title'))
         q.number = questionDict.get('number')
         q.type = questionDict.get('type')
         q.rule = questionDict.get('rule')

@@ -4,6 +4,7 @@ from flask.ext.restful import Resource, reqparse, marshal_with
 from resources import mongo, swagger, authorize, get_id, app
 from models.quiz import creation_parser, Quiz, QuizStats, Question
 from datetime import datetime
+import unicodedata
 
 
 class QuizResource(Resource):
