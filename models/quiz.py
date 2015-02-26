@@ -121,7 +121,7 @@ class Question:
     def question_from_dict(questionDict):
         q = Question()
         q._id = questionDict.get('_id')
-        q.title = str(questionDict.get('title')).decode('utf-8')
+        q.title = questionDict.get('title')
         q.number = questionDict.get('number')
         q.type = questionDict.get('type')
         q.rule = questionDict.get('rule')
