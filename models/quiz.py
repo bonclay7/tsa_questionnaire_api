@@ -54,10 +54,11 @@ class Quiz:
         q.creationDate = quizDict.get('creationDate')
 
         if not (quizDict.get('questions') is None):
+            print quizDict.get('questions')
             for questionDict in quizDict.get('questions'):
                 print "\n", questionDict.get('title')
                 q.questions.append(Question.question_from_dict(questionDict))
-        print "popo"
+
         return q
 
     @staticmethod
