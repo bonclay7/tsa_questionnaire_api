@@ -1,7 +1,7 @@
 import array
 
 __author__ = 'grk'
-from flask.ext.restful import reqparse, fields
+from flask.ext.restful import reqparse, fields, marshal_with
 
 
 quiz_fields = {
@@ -52,6 +52,20 @@ class Quiz:
 
         return q
 
+    @staticmethod
+    def quiz_head_from_dict(quizDict):
+        q = Quiz()
+        q._id = quizDict.get('_id')
+        q.title = quizDict.get('title')
+        q.comments = quizDict.get('comments')
+        q.language = quizDict.get('language')
+        q.createdBy = quizDict.get('createdBy')
+        q.creationDate = quizDict.get('creationDate')
+        q.questionsCount = len(quizDict.get('questions'))
+        return q
+
+
+
     def format(self):
         return {
             "_id": self._id,
@@ -62,10 +76,21 @@ class Quiz:
             "creationDate": str(self.creationDate)
         }
 
-    def format_for_update(self):
-        return {
-
+    def format_http(self):
+        formatted = {
+            "title": self.title,
+            "comments": self.comments,
+            "language": self.language,
+            "createdBy": self.createdBy,
+            "creationDate": str(self.creationDate),
+            "questions": []
         }
+        for q in self.questions:
+            formatted["questions"].append(q.format_http())
+
+        return formatted
+
+
 
     def format_for_delete(self):
         return {
@@ -111,6 +136,21 @@ class Question:
             "answersTemplate": self.answersTemplate
         }
 
+    def format_http(self):
+        formatted = {
+            "number": self.number,
+            "type": self.type,
+            "rule": self.rule,
+            "title": self.title,
+            "creationDate": str(self.creationDate),
+            "launchedBy": self.launchedBy,
+            "answersTemplate": []
+        }
+        for a in self.answersTemplate:
+            formatted["answersTemplate"].append(a.format_http())
+
+        return formatted
+
 
 class AnswerTemplate:
     def __init__(self):
@@ -132,4 +172,47 @@ class AnswerTemplate:
             "number": self.number,
             "value": self.value,
             "creationDate": str(self.creationDate)
+        }
+
+    def format_http(self):
+        return {
+            "number": self.number,
+            "value": self.value,
+            "creationDate": str(self.creationDate)
+        }
+
+
+class QuizStats:
+    def __init__(self):
+        self.title = ""
+        self.comments = ""
+        self.language = ""
+        self.createdBy = ""
+        self.questionsCount = []
+        self.creationDate = None
+        self._id = ""
+
+    @staticmethod
+    def quiz_from_dict(quizDict):
+        q = QuizStats()
+        q._id = quizDict.get('_id')
+        q.title = quizDict.get('title')
+        q.comments = quizDict.get('comments')
+        q.language = quizDict.get('language')
+        q.createdBy = quizDict.get('createdBy')
+        q.creationDate = quizDict.get('creationDate')
+        q.questionsCount = len(quizDict.get('questions'))
+
+        return q
+
+
+    def format(self):
+        return {
+            "_id": self._id,
+            "title": self.title,
+            "comments": self.comments,
+            "language": self.language,
+            "createdBy": self.createdBy,
+            "creationDate": str(self.creationDate),
+            "questionsCount": self.questionsCount
         }

@@ -1,11 +1,8 @@
-from flask.ext.restful.utils.cors import crossdomain
-
 __author__ = 'grk'
 from flask import request, abort
-from flask.ext.restful import Resource, reqparse, fields, marshal_with
-from resources import mongo, swagger, authorize, get_id
-from models.quiz import creation_parser, Quiz, Question, AnswerTemplate
-import hashlib
+from flask.ext.restful import Resource, reqparse, marshal_with
+from resources import mongo, swagger, authorize, get_id, app
+from models.quiz import creation_parser, Quiz, QuizStats, Question
 from datetime import datetime
 
 
@@ -36,7 +33,6 @@ class QuizResource(Resource):
 
 
 
-    @crossdomain(origin='*')
     def post(self):
         session = authorize(request.headers["Authorization"])
 
@@ -54,10 +50,35 @@ class QuizResource(Resource):
             self.add_question(qst, quiz)
 
 
-        return "{'quiz_id':'%s'}" % (quiz._id), 201
+        return {"quiz_id": "%s" % (quiz._id)}, 201
 
 
-    @crossdomain(origin='*')
-    def get(self):
-        id = get_id("popo")
-        return "{'id':'%s'}" % (id), 201
+
+    def get(self, quiz_id=None):
+
+        session = authorize(request.headers["Authorization"])
+
+        if quiz_id is None:
+            return self.get_all_quiz(session.get('user').get('login'))
+        else:
+            print "popo ", quiz_id
+            return self.get_single_quiz(quiz_id)
+
+
+
+    def get_all_quiz(self, username):
+        quiz = []
+        results = mongo.db.quiz.find({"createdBy": username})
+
+        for q in results:
+            quiz.append(QuizStats.quiz_from_dict(q).format())
+
+        return quiz
+
+
+    def get_single_quiz(self, quiz_id):
+        res = mongo.db.quiz.find_one_or_404({"_id": int(quiz_id)})
+        quiz = Quiz.quiz_from_dict(res)
+
+        return quiz.format_http()
+
