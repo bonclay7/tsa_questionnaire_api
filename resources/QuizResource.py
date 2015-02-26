@@ -34,7 +34,6 @@ class QuizResource(Resource):
 
         quiz_input = creation_parser.parse_args()
         quiz = Quiz.quiz_from_dict(quiz_input)
-        print request.data
         quiz.creationDate = datetime.now()
         quiz.createdBy = session.get('user').get('login')
 

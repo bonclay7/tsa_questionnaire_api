@@ -52,6 +52,7 @@ class Quiz:
         q.language = quizDict.get('language')
         q.createdBy = quizDict.get('createdBy')
         q.creationDate = quizDict.get('creationDate')
+        print "popo"
         if not (quizDict.get('questions') is None):
             for questionDict in quizDict.get('questions'):
                 print "\n", questionDict.get('title')
