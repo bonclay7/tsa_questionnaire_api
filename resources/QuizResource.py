@@ -33,8 +33,8 @@ class QuizResource(Resource):
         session = authorize(request.headers["Authorization"])
 
         quiz_input = creation_parser.parse_args()
-        print request.data
         quiz = Quiz.quiz_from_dict(quiz_input)
+        print request.data
         quiz.creationDate = datetime.now()
         quiz.createdBy = session.get('user').get('login')
 
