@@ -26,6 +26,12 @@ creation_parser.add_argument('questions.answersTemplate', dest='questions.answer
 #creation_parser.add_argument('questions.answersTemplate.value', dest='questions.answersTemplate.value', type=str, location='json', )
 
 
+
+edit_parser = reqparse.RequestParser()
+
+
+
+
 class Quiz:
     def __init__(self):
         self.title = ""
@@ -68,7 +74,6 @@ class Quiz:
 
     def format(self):
         return {
-            "_id": self._id,
             "title": self.title,
             "comments": self.comments,
             "language": self.language,
@@ -78,6 +83,7 @@ class Quiz:
 
     def format_http(self):
         formatted = {
+            "_id": self._id,
             "title": self.title,
             "comments": self.comments,
             "language": self.language,
@@ -111,10 +117,12 @@ class Question:
     @staticmethod
     def question_from_dict(questionDict):
         q = Question()
+        q._id = questionDict.get('_id')
         q.title = questionDict.get('title')
         q.number = questionDict.get('number')
         q.type = questionDict.get('type')
         q.rule = questionDict.get('rule')
+        q.creationDate = questionDict.get('creationDate')
         q.launchedBy = questionDict.get('launchedBy')
         answersTemplate = questionDict.get('answersTemplate')
         print answersTemplate
@@ -162,7 +170,9 @@ class AnswerTemplate:
     @staticmethod
     def answer_from_dict(answerTemplateDict):
         a = AnswerTemplate()
+        a._id = answerTemplateDict.get('_id')
         a.number = answerTemplateDict.get('number')
+        a.creationDate = answerTemplateDict.get('creationDate')
         a.value = answerTemplateDict.get('value')
         return a
 

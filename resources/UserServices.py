@@ -82,14 +82,26 @@ class UserServices(Resource):
                        ]
     )
     @crossdomain(origin='*')
-    def get(self, login):
+    def get(self, login=None):
         authorize(request.headers["Authorization"])
 
+        if login is None:
+            return self.get_all_users()
+        else:
+            return self.get_a_user(login)
+
+
+
+    def get_all_users(self):
+        users = []
+        for user in mongo.db.users.find():
+            users.append(User.user_from_dict(user).format())
+
+        return users, 200
+
+    def get_a_user(self, login):
         user = mongo.db.users.find_one_or_404({"login": login})
-
         return User.user_from_dict(user).format(), 200
-
-
 
     @swagger.operation(notes='Modify a user',
                        nickname='modify user',
@@ -188,42 +200,5 @@ class UserServices(Resource):
         print "deleted : ", delete_id
 
         return {"message": "deleted"}, 200
-
-
-class UserListServices(Resource):
-    def __init__(self):
-        self.parser = reqparse.RequestParser()
-        self.parser.add_argument("Content-Type", type=str, location='headers', required=True,
-                                 help="Content Type must be application/json")
-        self.parser.add_argument("Authorization", type=str, location='headers', required=True,
-                                 help="Authorization header missing")
-
-
-
-    @swagger.operation(notes='Get all users',
-                       nickname='get all users',
-                       parameters=[
-                           {
-                               "name": "Authorization",
-                               "description": "API Token (Bearer api_token)",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "header"
-                           }
-                       ]
-    )
-    @crossdomain(origin='*')
-    def get(self):
-        authorize(request.headers["Authorization"])
-        users = []
-
-        for user in mongo.db.users.find():
-            users.append(User.user_from_dict(user).format())
-
-        print(users)
-
-        return users, 200
-
 
 
