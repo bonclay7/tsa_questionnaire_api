@@ -1,3 +1,4 @@
+# -*- coding:utf-8 -*-
 __author__ = 'grk'
 from flask import request, abort
 from flask.ext.restful import Resource, reqparse, marshal_with
