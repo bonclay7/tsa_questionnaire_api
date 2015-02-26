@@ -74,6 +74,7 @@ class Quiz:
 
     def format(self):
         return {
+            "_id": self._id,
             "title": self.title,
             "comments": self.comments,
             "language": self.language,
@@ -211,7 +212,7 @@ class QuizStats:
         q.language = quizDict.get('language')
         q.createdBy = quizDict.get('createdBy')
         q.creationDate = quizDict.get('creationDate')
-        q.questionsCount = len(quizDict.get('questions'))
+        q.questionsCount = 0 if quizDict.get('questions') is None else len(quizDict.get('questions'))
 
         return q
 

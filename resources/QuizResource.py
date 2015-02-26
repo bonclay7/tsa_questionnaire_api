@@ -39,6 +39,7 @@ class QuizResource(Resource):
 
         """ we create the quiz first """
         quiz._id = int(get_id("quiz"))
+        print "\n", quiz.format()
         mongo.db.quiz.insert(quiz.format())
 
         """ we create questions as objects and we embbed them into the quiz"""
