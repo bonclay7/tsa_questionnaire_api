@@ -1,12 +1,10 @@
 # -*- coding:utf-8 -*-
 __author__ = 'grk'
 from flask import request, abort
-from flask.ext.restful import Resource, reqparse, marshal_with
-from resources import mongo, swagger, authorize, get_id, app
-from models.quiz import creation_parser, Quiz, QuizStats, Question
+from flask.ext.restful import Resource, reqparse
+from resources import mongo, authorize, get_id
+from models.quiz import creation_parser, Quiz, QuizStats, patch_parser, put_parser
 from datetime import datetime
-import unicodedata
-
 
 class QuizResource(Resource):
     def __init__(self):
@@ -38,8 +36,6 @@ class QuizResource(Resource):
         quiz = Quiz.quiz_from_dict(quiz_input)
         quiz.creationDate = datetime.now()
         quiz.createdBy = session.get('user').get('login')
-
-
 
         """ we create the quiz first """
         quiz._id = int(get_id("quiz"))
@@ -75,16 +71,60 @@ class QuizResource(Resource):
         quiz = Quiz.quiz_from_dict(res)
         return quiz
 
+    """ here we will just add one or many questions to a quiz as an array"""
     def put(self, quiz_id):
         session = authorize(request.headers["Authorization"])
-        user_login = session.get("user").get("login")
+        put_request = Quiz.quiz_from_dict(put_parser.parse_args())
 
-        """ we will parse the input first """
+        criteria = {"createdBy": session.get('user').get('login'), "_id": int(quiz_id)}
+        quiz = Quiz.quiz_from_dict(mongo.db.quiz.find_one_or_404(criteria))
 
+        for qst in put_request.questions:
+            self.add_question(qst, quiz)
 
-        quiz = self.get_single_quiz(quiz_id)
+        return {"message": "modified % s" % quiz_id}, 200
 
+    """ modify some elements about the quiz, not the questions"""
+    def patch(self, quiz_id):
+        session = authorize(request.headers["Authorization"])
+        patch_request = Quiz.quiz_from_dict(patch_parser.parse_args()).format_patch()
 
-    def patch(self, quiz_id=None, question_id=None):
-        print "popo"
-        return "", 200
+        if len(patch_request) == 0:
+            abort(400)
+
+        criteria = {"createdBy": session.get('user').get('login'), "_id": int(quiz_id)}
+        mongo.db.quiz.find_one_or_404(criteria)
+        mongo.db.quiz.update(criteria, {"$set": patch_request})
+
+        return {"message": "modified % s" % quiz_id}, 200
+
+    def delete(self, quiz_id, question_id=None):
+        session = authorize(request.headers["Authorization"])
+
+        if question_id is None:
+            return self.delete_quiz(session.get('user').get('login'), quiz_id)
+        else:
+            return self.delete_question(session.get('user').get('login'), quiz_id, question_id)
+
+    def delete_quiz(self, login, quiz_id):
+        criteria = {"createdBy": login, "_id": int(quiz_id)}
+        delete = mongo.db.quiz.find_one_or_404(criteria)
+        mongo.db.quiz_deleted.insert(delete)
+        mongo.db.quiz_deleted.update(criteria, {"$set": {"deleteDate": str(datetime.now())}})
+        mongo.db.quiz.remove(criteria)
+
+        return {"message": "deleted %s" % quiz_id}, 204
+
+    def delete_question(self, login, quiz_id, question_id):
+        criteria = {"createdBy": login, "_id": int(quiz_id), "questions._id": "%s.%s" % (quiz_id, question_id)}
+        question_criteria = {"_id": "%s.%s" % (quiz_id, question_id)}
+        """ we check in the db if the question is there and we rise and 404 response otherwise """
+        mongo.db.quiz.find_one_or_404(criteria)
+
+        """ we delete the question in the db system """
+        mongo.db.questions.remove(question_criteria)
+
+        """ we remove it from the quiz array """
+        mongo.db.quiz.update(criteria, {"$pull": {"questions": question_criteria}})
+
+        return None, 204

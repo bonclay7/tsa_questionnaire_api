@@ -51,6 +51,7 @@ def output_json(obj, code, headers=None):
     return resp
 
 DEFAULT_REPRESENTATIONS = {'application/json': output_json}
+app.json_encoder
 api = swagger.docs(restful.Api(app), apiVersion='0.1')
 
 

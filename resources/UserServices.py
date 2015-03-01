@@ -186,9 +186,7 @@ class UserServices(Resource):
         if login == SUPER_USER:
             abort(403)
 
-        existing = mongo.db.users.find_one({"login": login})
-        if existing is None:
-            abort(404)
+        existing = mongo.db.users.find_one_or_404({"login": login})
 
         user_delete = User.user_from_dict(existing)
         user_delete.deleteDate = datetime.now()

@@ -17,18 +17,20 @@ creation_parser.add_argument('comments', dest='comments', type=str, location='js
 creation_parser.add_argument('language', dest='language', type=str, location='json', required=True,
                              help='language is missing', )
 creation_parser.add_argument('questions', dest='questions', type=list, location='json', required=False, )
-#creation_parser.add_argument('questions.number', dest='questions.number', type=int, location='json', required=True, help="Question number must be an integer", )
-#creation_parser.add_argument('questions.type', dest='questions.type', type=str, location='json', required=True, help="Question type is missing", )
-#creation_parser.add_argument('questions.title', dest='questions.title', type=str, location='json', required=True, help="Question title is missing", )
 creation_parser.add_argument('questions.answersTemplate', dest='questions.answersTemplate', type=list, location='json', )
-#creation_parser.add_argument('questions.answersTemplate.number', dest='questions.answersTemplate.number', type=int, location='json', )
-#creation_parser.add_argument('questions.answersTemplate.value', dest='questions.answersTemplate.value', type=str, location='json', )
 
 
+patch_parser = reqparse.RequestParser()
+patch_parser.add_argument('title', dest='title', type=str, location='json', required=False, help='title is missing', )
+patch_parser.add_argument('comments', dest='comments', type=str, location='json', required=False,
+                             help='comments is missing', )
+patch_parser.add_argument('language', dest='language', type=str, location='json', required=False,
+                             help='language is missing', )
+patch_parser.add_argument('questions', dest='questions', type=list, location='json', required=False, )
 
-edit_parser = reqparse.RequestParser()
 
-
+put_parser = reqparse.RequestParser()
+put_parser.add_argument('questions', dest='questions', type=list, location='json', required=True, )
 
 
 class Quiz:
@@ -65,7 +67,7 @@ class Quiz:
         q = Quiz()
         q._id = quizDict.get('_id')
         q.title = quizDict.get('title')
-        q.comments = quizDict.get('comments')
+        q.comments = quizDict.get('comments').decode('utf-8')
         q.language = quizDict.get('language')
         q.createdBy = quizDict.get('createdBy')
         q.creationDate = quizDict.get('creationDate')
@@ -97,6 +99,22 @@ class Quiz:
         for q in self.questions:
             formatted["questions"].append(q.format_http())
 
+        return formatted
+
+    def format_patch(self):
+        patch = dict()
+        if not (self.title is None):
+            patch["title"] = self.title
+        if not (self.comments is None):
+            patch["comments"] = self.comments
+        if not (self.language is None):
+            patch["language"] = self.language
+        return patch
+
+    def format_put(self):
+        formatted = {"questions": []}
+        for q in self.questions:
+            formatted["questions"].append(q.format_http())
         return formatted
 
 
