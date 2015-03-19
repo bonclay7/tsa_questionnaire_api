@@ -1,5 +1,3 @@
-from flask.ext.restful.utils.cors import crossdomain
-
 __author__ = 'grk'
 
 from flask.ext.restful import Resource

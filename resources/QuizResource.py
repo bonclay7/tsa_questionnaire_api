@@ -110,10 +110,13 @@ class QuizResource(Resource):
         criteria = {"createdBy": login, "_id": int(quiz_id)}
         delete = mongo.db.quiz.find_one_or_404(criteria)
         mongo.db.quiz_deleted.insert(delete)
+
+        #TODO : Supression des questions associées
+
         mongo.db.quiz_deleted.update(criteria, {"$set": {"deleteDate": str(datetime.now())}})
         mongo.db.quiz.remove(criteria)
 
-        return {"message": "deleted %s" % quiz_id}, 204
+        return None, 204
 
     def delete_question(self, login, quiz_id, question_id):
         criteria = {"createdBy": login, "_id": int(quiz_id), "questions._id": "%s.%s" % (quiz_id, question_id)}
