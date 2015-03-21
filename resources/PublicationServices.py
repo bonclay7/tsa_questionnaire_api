@@ -1,12 +1,17 @@
 from flask.ext.restful.utils.cors import crossdomain
+from models.publication import Publication
 
 __author__ = 'grk'
 from flask import request, abort
 from flask.ext.restful import Resource, reqparse, fields, marshal_with
 from resources import mongo, swagger, SUPER_USER, authorize, get_id
+from models.quiz import creation_parser, Quiz, QuizStats, patch_parser, put_parser
 from models.user import User, post_parser, user_fields
+from models.contact import Contact
 import hashlib
 from datetime import datetime
+import smtplib
+from email.mime.text import MIMEText
 
 
 class PublicationServices(Resource):
@@ -18,185 +23,56 @@ class PublicationServices(Resource):
                                  help="Authorization header missing")
 
 
-    @swagger.operation(notes='Create a user',
-                       nickname='create user',
-                       parameters=[
-                           {
-                               "name": "Authorization",
-                               "description": "API Token (Bearer api_token)",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "header"
-                           },
-                           {
-                               "name": "user",
-                               "description": "User json",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "body"
-                           }
-                       ]
-    )
-    @crossdomain(origin='*')
-    @marshal_with(user_fields)
-    def post(self):
-        authorize(request.headers["Authorization"])
+    def post(self, quiz_id, contact_group=None):
+        session = authorize(request.headers["Authorization"])
 
-        user = User.user_from_dict(post_parser.parse_args())
-        user.password = hashlib.sha256(user.password).hexdigest()
-        user.creationDate = datetime.now()
+        if contact_group is None: contact_group = "default"
 
-        existing = mongo.db.users.find_one({"login":user.login})
+        contacts = self.get_contacts(contact_group, session.get("user").get("login"))
 
-        if not (existing is None):
-            abort(409)
+        if contacts is None:
+            return {"message": "no contact to send"}, 400
 
-        user_id = mongo.db.users.insert(user.format_for_create())
-        user._id = user_id
-        print "inserted : ", user_id
+        criteria = {"createdBy": session.get('user').get('login'), "_id": int(quiz_id)}
+        quiz = Quiz.quiz_from_dict(mongo.db.quiz.find_one_or_404(criteria))
 
-        return user, 201
+        for contact in contacts:
+            c = Contact.contact_from_dict(contact)
+            p = Publication()
+            p._id = get_id("publication")
+            p.creationDate = datetime.now()
+            p.hash = hashlib.sha256("%d.%s" % (p._id, str(p.creationDate))).hexdigest()
+            p.by = session.get('user').get('login')
+            p.quiz = quiz
+            p.to =  c
+            mongo.db.publications.insert(p.format())
+            self.send_email(quiz.title, p.hash, c.email, c.language)
 
-
-    @swagger.operation(notes='Get a user',
-                       nickname='get a user',
-                       parameters=[
-                           {
-                               "name": "Authorization",
-                               "description": "API Token (Bearer api_token)",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "header"
-                           },
-                           {
-                               "name": "login",
-                               "description": "User login",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "path"
-                           }
-                       ]
-    )
-    @crossdomain(origin='*')
-    def get(self, login=None):
-        authorize(request.headers["Authorization"])
-
-        if login is None:
-            return self.get_all_users()
-        else:
-            return self.get_a_user(login)
+        return {"message": "quiz %s published to %d contacts" % (quiz.title, len(contacts))}, 200
 
 
 
-    def get_all_users(self):
-        users = []
-        for user in mongo.db.users.find():
-            users.append(User.user_from_dict(user).format())
 
-        return users, 200
-
-    def get_a_user(self, login):
-        user = mongo.db.users.find_one_or_404({"login": login})
-        return User.user_from_dict(user).format(), 200
-
-    @swagger.operation(notes='Modify a user',
-                       nickname='modify user',
-                       parameters=[
-                           {
-                               "name": "Authorization",
-                               "description": "API Token (Bearer api_token)",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "header"
-                           },
-                           {
-                               "name": "login",
-                               "description": "User login",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "path"
-                           },
-                           {
-                               "name": "user",
-                               "description": "User json",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "body"
-                           }
-                       ]
-    )
-    @crossdomain(origin='*')
-    @marshal_with(user_fields)
-    def put(self, login):
-        authorize(request.headers["Authorization"])
-
-        if login == SUPER_USER:
-            abort(403)
-
-        existing = mongo.db.users.find_one({"login": login})
-        if existing is None:
-            abort(404)
-
-        user_edit = User.user_from_dict(post_parser.parse_args())
-        user_edit.password = hashlib.sha256(user_edit.password).hexdigest()
-        user_edit.creationDate = existing.get('creationDate')
-
-        print user_edit.format()
-
-        mongo.db.users.update({"login": login}, {"$set": user_edit.format_for_update()})
-
-        print "modified : ", user_edit
-
-        return user_edit, 201
+    def get_contacts(self, group_name, owner):
+        res = mongo.db.contacts_groups.find_one({"name": group_name, "owner": owner})
+        if not (res is None):
+            return res.get("contacts")
+        return None
 
 
 
-    @swagger.operation(notes='Delete a user',
-                       nickname='delete a user',
-                       parameters=[
-                           {
-                               "name": "Authorization",
-                               "description": "API Token (Bearer api_token)",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "header"
-                           },
-                           {
-                               "name": "login",
-                               "description": "User login",
-                               "required": True,
-                               "allowMultiple": False,
-                               "dataType": str.__name__,
-                               "paramType": "path"
-                           }
-                       ]
-    )
-    @crossdomain(origin='*')
-    def delete(self, login):
-        authorize(request.headers["Authorization"])
+    def send_email(self, quiz_title, pub_hash, to, lang):
+        me = "sio.autismgroup@gmail.com"
+        url = "http://127.0.0.1:8080/participation/%s/" % pub_hash
 
-        if login == SUPER_USER:
-            abort(403)
+        msg = MIMEText("You have been invited to participate to a survey at %s" % url)
+        msg["Subject"] = "Survey - %s" % quiz_title
+        msg["From"] = me
+        msg["To"] = to
 
-        existing = mongo.db.users.find_one_or_404({"login": login})
-
-        user_delete = User.user_from_dict(existing)
-        user_delete.deleteDate = datetime.now()
-
-        delete_id = mongo.db.users_deleted.insert(user_delete.format_for_delete())
-
-        mongo.db.users.remove({"login": login})
-
-        print "deleted : ", delete_id
-
-        return {"message": "deleted"}, 200
-
-
+        s = smtplib.SMTP('smtp.gmail.com:587')
+        s.starttls()
+        #s = smtplib.SMTP('aspmx.l.google.com:25')
+        s.login(me, "4DQGyP3JponyD")
+        s.sendmail(me, [to], msg.as_string())
+        s.quit()

@@ -98,9 +98,3 @@ class ContactsServices(Resource):
         print "deleted : ", delete_id
 
         return {"message": "deleted"}, 200
-
-
-
-
-class ContactsGroupsServices(Resource):
-    pass

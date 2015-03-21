@@ -38,6 +38,7 @@ class Contact:
 
     @staticmethod
     def contact_from_dict(userDict):
+        if userDict is None: return None
         c = Contact()
         c.language = userDict.get('language')
         c.creationDate = userDict.get('creationDate')
