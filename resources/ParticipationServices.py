@@ -2,16 +2,11 @@ from flask.ext.restful.utils.cors import crossdomain
 from models.publication import Publication
 
 __author__ = 'grk'
+from flask.ext.restful import Resource, reqparse
+from models.participation import Answer, Participation, participation_parser
+from resources import mongo
 from flask import request, abort
-from flask.ext.restful import Resource, reqparse, fields, marshal_with
 from resources import mongo, swagger, SUPER_USER, authorize, get_id
-from models.quiz import creation_parser, Quiz, QuizStats, patch_parser, put_parser
-from models.user import User, post_parser, user_fields
-from models.contact import Contact
-import hashlib
-from datetime import datetime
-import smtplib
-from email.mime.text import MIMEText
 
 
 class ParticipationServices(Resource):
@@ -25,4 +20,8 @@ class ParticipationServices(Resource):
 
 
     def post(self, pub_hash):
-        pass
+        self.parser.add_argument("Authorization", type=str, location='headers', required=True,
+                                 help="Authorization header missing")
+        session = authorize(request.headers["Authorization"])
+        print session
+        print participation_parser.parse_args()

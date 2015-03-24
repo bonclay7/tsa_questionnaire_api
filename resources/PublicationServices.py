@@ -44,7 +44,7 @@ class PublicationServices(Resource):
             p.hash = hashlib.sha256("%d.%s" % (p._id, str(p.creationDate))).hexdigest()
             p.by = session.get('user').get('login')
             p.quiz = quiz
-            p.to =  c
+            p.to = c
             mongo.db.publications.insert(p.format())
             self.send_email(quiz.title, p.hash, c.email, c.language)
 
