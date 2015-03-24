@@ -63,7 +63,7 @@ class PublicationServices(Resource):
 
     def send_email(self, quiz_title, pub_hash, to, lang):
         me = "sio.autismgroup@gmail.com"
-        url = "http://hindsight.fr/tsa/index.html#/participation/%s/" % pub_hash
+        url = "http://hindsight.fr/tsa/index.html#/participation/%s" % pub_hash
 
         msg = MIMEText("Hello, you have been invited to participate to a survey at %s" % url)
         msg["Subject"] = "Survey - %s" % quiz_title
