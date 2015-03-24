@@ -63,9 +63,9 @@ class PublicationServices(Resource):
 
     def send_email(self, quiz_title, pub_hash, to, lang):
         me = "sio.autismgroup@gmail.com"
-        url = "http://127.0.0.1:8080/participation/%s/" % pub_hash
+        url = "http://52.10.153.232:8080/participation/%s/" % pub_hash
 
-        msg = MIMEText("You have been invited to participate to a survey at %s" % url)
+        msg = MIMEText("Hello, you have been invited to participate to a survey at %s" % url)
         msg["Subject"] = "Survey - %s" % quiz_title
         msg["From"] = me
         msg["To"] = to
